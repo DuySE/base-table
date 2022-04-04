@@ -3,6 +3,9 @@ import BaseTable, { Column } from 'react-base-table'
 import 'react-base-table/styles.css'
 import styled from 'styled-components'
 import axios from 'axios'
+import EditableCell from '../components/EditableCell'
+import Pagination from '../components/Pagination'
+import usePagination from '../components/hooks/usePagination'
 
 const Container = styled.div`
   height: ${props => props?.height || '100vh'};
@@ -17,20 +20,33 @@ const defaultSort = { key: 'title', order: SortOrder.ASC }
 
 export default function Home() {
   const [posts, setPosts] = useState([])
+  const [sortBy, setSortBy] = useState(defaultSort);
+
   const fetchPosts = async () => {
     const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
-    setPosts(response.data)
+    setPosts(response.data.map((i, key) => ({ ...i, key })));
   }
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const onColumnSort = sortBy => {
+  const onColumnSort = (sortBy) => {
     const order = sortBy.order === SortOrder.ASC ? 1 : -1
-    const data = [...posts]
-    data.sort((a, b) => (a[sortBy.key] > b[sortBy.key] ? order : -order))
-    setPosts(data)
+    posts.sort((a, b) => (a[sortBy.key] > b[sortBy.key] ? order : -order))
+    setSortBy(sortBy)
+    setPosts(posts)
+  }
+
+  const paginationProps = usePagination(posts);
+  const { currentData } = paginationProps || {};
+
+  const removeRow = (rowData, data) => setPosts(Array.isArray(data) ? data.filter(({ id }) => rowData?.id !== id) : [])
+
+  const editRow = (rowData, data) => {
+    const newRow = { ...rowData, title: "Updated" }
+    const newData = Array.isArray(data) ? data.map((item) => item?.id === newRow?.id ? { ...newRow } : { ...item }) : []
+    setPosts(newData)
   }
 
   const columns = [
@@ -47,50 +63,53 @@ export default function Home() {
       key: 'title',
       title: 'Title',
       dataKey: 'title',
-      width: 150,
+      width: 300,
       resizable: true,
       sortable: true,
       align: Column.Alignment.CENTER,
+      cellRenderer: (props) => <EditableCell {...props} setPosts={setPosts} />,
     },
     {
       key: 'body',
       title: 'Body',
       dataKey: 'body',
-      width: 150,
+      width: 500,
       resizable: true,
       sortable: true,
       align: Column.Alignment.CENTER,
+      cellRenderer: (props) => <EditableCell {...props} setPosts={setPosts} />,
     },
     {
       key: 'action',
+      title: 'Action',
       width: 100,
       align: Column.Alignment.CENTER,
       frozen: Column.FrozenDirection.RIGHT,
-      cellRenderer: ({ rowData, ...rest }) => {
-        console.log('rest: ', rest);
-        console.log('rowData: ', rowData);
-        return (
+      cellRenderer: ({ rowData = {}, container = {} }) => (
+        <>
           <button
-            onClick={() => {}}
+            onClick={() => removeRow(rowData, container?._data)}
           >
             Remove
           </button>
-        )
-      },
+        </>
+      ),
     },
-  ]
+  ];
 
   return (
     <>
-      <Container height={1000}>
+      <Container id="container">
         <BaseTable
-          data={posts}
-          columns={columns}
-          width={1000}
-          height={1000}
-          sortBy={defaultSort}
+          data={currentData()}
+          width={1020}
+          height={550}
+          sortBy={sortBy}
           onColumnSort={onColumnSort}
-        />
+        >
+          {columns.map((item) => <Column {...item} />)}
+        </BaseTable>
+        <Pagination {...paginationProps} />
       </Container>
     </>
   )
