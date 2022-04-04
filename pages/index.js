@@ -5,7 +5,6 @@ import styled from 'styled-components'
 import axios from 'axios'
 import EditableCell from '../components/EditableCell'
 import Pagination from '../components/Pagination'
-import usePagination from '../components/hooks/usePagination'
 
 const Container = styled.div`
   height: ${props => props?.height || '100vh'};
@@ -21,6 +20,7 @@ const defaultSort = { key: 'title', order: SortOrder.ASC }
 export default function Home() {
   const [posts, setPosts] = useState([])
   const [sortBy, setSortBy] = useState(defaultSort);
+  const [currentPage, setCurrentPage] = useState(1)
 
   const fetchPosts = async () => {
     const response = await axios.get('https://jsonplaceholder.typicode.com/posts');
@@ -38,8 +38,11 @@ export default function Home() {
     setPosts(posts)
   }
 
-  const paginationProps = usePagination(posts);
-  const { currentData } = paginationProps || {};
+  const currentData = () => {
+    const start = (currentPage - 1) * 10
+    const end = start + 10
+    return posts.slice(start, end)
+  }
 
   const removeRow = (rowData, data) => setPosts(Array.isArray(data) ? data.filter(({ id }) => rowData?.id !== id) : [])
 
@@ -109,7 +112,13 @@ export default function Home() {
         >
           {columns.map((item) => <Column {...item} />)}
         </BaseTable>
-        <Pagination {...paginationProps} />
+        <Pagination
+          className="pagination-bar"
+          currentPage={currentPage}
+          totalCount={posts.length}
+          pageSize={10}
+          onPageChange={page => setCurrentPage(page)}
+        />
       </Container>
     </>
   )

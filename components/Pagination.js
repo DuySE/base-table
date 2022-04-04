@@ -1,36 +1,74 @@
-import { useState } from 'react'
+import classnames from 'classnames';
+import { usePagination, DOTS } from './hooks/usePagination';
 
-export default function Pagination({ next, prev, jump, currentPage, maxPage }) {
-  const [page, setPage] = useState(1)
+const Pagination = (props) => {
+  const {
+    onPageChange,
+    totalCount,
+    siblingCount = 1,
+    currentPage,
+    pageSize,
+    className
+  } = props;
+
+  const paginationRange = usePagination({
+    currentPage,
+    totalCount,
+    siblingCount,
+    pageSize
+  });
+
+  if (currentPage === 0 || paginationRange.length < 2) {
+    return null;
+  }
+  let lastPage = paginationRange[paginationRange.length - 1];
+
+  const next = () => {
+    onPageChange(Math.min(currentPage + 1, lastPage));
+  };
+
+  const prev = () => {
+    onPageChange(Math.max(currentPage - 1, 1));
+  };
 
   return (
-    <ul className="pagination">
-      <li className="pagination-item">
-        <button onClick={() => jump(1)} className={currentPage === 1 ? 'disabled' : ''} disabled={currentPage === 1}>
-          First
-        </button>
+    <ul
+      className={classnames('pagination-container', { [className]: className })}
+    >
+      <li
+        className={classnames('pagination-item', {
+          disabled: currentPage === 1
+        })}
+        onClick={prev}
+      >
+        <button>&lt;</button>
       </li>
-      <li className="pagination-item">
-        <button onClick={prev} className={currentPage === 1 ? 'disabled' : ''} disabled={currentPage === 1}>
-          &lt;
-        </button>
-      </li>
-      <li className="pagination-item">
-        <button onClick={next} className={currentPage === maxPage ? 'disabled' : ''} disabled={currentPage === maxPage}>
-          &gt;
-        </button>
-      </li>
-      <li className="pagination-item">
-        <button onClick={() => jump(maxPage)} className={currentPage === maxPage ? 'disabled' : ''} disabled={currentPage === maxPage}>
-          Last
-        </button>
-      </li>
-      <li className="goto">
-        <input type="text" name="page" placeholder="Enter page" onChange={e => setPage(e.target.value)} />
-        <button onClick={() => jump(page)}>
-          Go to page
-        </button>
+      {paginationRange.map(pageNumber => {
+        if (pageNumber === DOTS) {
+          return <li className="pagination-item dots">&#8230;</li>;
+        }
+
+        return (
+          <li
+            className={classnames('pagination-item', {
+              selected: pageNumber === currentPage
+            })}
+            onClick={() => onPageChange(pageNumber)}
+          >
+            <button>{pageNumber}</button>
+          </li>
+        );
+      })}
+      <li
+        className={classnames('pagination-item', {
+          disabled: currentPage === lastPage
+        })}
+        onClick={next}
+      >
+        <button>&gt;</button>
       </li>
     </ul>
-  )
-}
+  );
+};
+
+export default Pagination
