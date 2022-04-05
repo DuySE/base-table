@@ -28,6 +28,10 @@ export default function Home() {
   }
 
   useEffect(() => {
+    const { hash } = window?.location || {};
+    if (typeof hash === 'string' && hash.includes('#page')) {
+      setCurrentPage(hash?.split('#page')[1]);
+    }
     fetchPosts();
   }, []);
 
@@ -100,6 +104,11 @@ export default function Home() {
     },
   ];
 
+  const handleCurrentPage = (page) => {
+    setCurrentPage(page);
+    window.location.hash = `page${page}`;
+  }
+
   return (
     <>
       <Container id="container">
@@ -117,7 +126,7 @@ export default function Home() {
           currentPage={currentPage}
           totalCount={posts.length}
           pageSize={10}
-          onPageChange={page => setCurrentPage(page)}
+          onPageChange={handleCurrentPage}
         />
       </Container>
     </>

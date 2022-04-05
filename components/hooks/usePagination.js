@@ -40,11 +40,6 @@ export function usePagination({
       return [...leftRange, DOTS, totalPageCount];
     }
 
-    const jump = page => {
-      const pageNumber = Math.max(1, page)
-      setCurrentPage(() => Math.min(pageNumber, maxPage))
-    }
-
     if (shouldShowLeftDots && !shouldShowRightDots) {
       let rightItemCount = 3 + 2 * siblingCount;
       let rightRange = range(

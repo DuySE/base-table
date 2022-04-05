@@ -18,10 +18,10 @@ const Pagination = (props) => {
     pageSize
   });
 
-  if (currentPage === 0 || paginationRange.length < 2) {
+  if (currentPage === 0 || paginationRange?.length < 2 || !paginationRange) {
     return null;
   }
-  let lastPage = paginationRange[paginationRange.length - 1];
+  let lastPage = paginationRange[paginationRange?.length - 1];
 
   const next = () => {
     onPageChange(Math.min(currentPage + 1, lastPage));
